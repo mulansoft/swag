@@ -5,9 +5,9 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/swaggo/swag"
-	"github.com/swaggo/swag/gen"
 	"github.com/urfave/cli"
+	"github.com/zhongkeqin/swag"
+	"github.com/zhongkeqin/swag/gen"
 )
 
 func main() {
