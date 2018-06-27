@@ -384,6 +384,10 @@ func (parser *Parser) ParseDefinition(pkgName string, typeSpec *ast.TypeSpec, ty
 		parser.parseTypeSpec(pkgName, typeSpec, properties)
 	}
 	structStacks = []string{}
+	if len(properties) == 0 {
+		log.Println("Skipping '" + refTypeName + "', empty properties.")
+		return
+	}
 
 	requiredFields := make([]string, 0)
 	for k, prop := range properties {
@@ -620,14 +624,6 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 		structField.name = jsonTag
 	}
 
-	exampleTag := reflect.StructTag(structTag).Get("example")
-	if exampleTag != "" {
-		structField.exampleValue = defineTypeOfExample(structField.schemaType, exampleTag)
-	}
-	formatTag := reflect.StructTag(structTag).Get("format")
-	if formatTag != "" {
-		structField.formatType = formatTag
-	}
 	bindingTag := reflect.StructTag(structTag).Get("binding")
 	if bindingTag != "" {
 		for _, val := range strings.Split(bindingTag, ",") {
@@ -644,6 +640,22 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 				structField.isRequired = true
 				break
 			}
+		}
+	}
+	// doc:"description, default value, type alias"
+	docTag := reflect.StructTag(structTag).Get("doc")
+	if docTag != "" {
+		attrs := strings.Split(docTag, ",")
+		switch len(attrs) {
+		case 1:
+			structField.formatType = attrs[0]
+		case 2:
+			structField.formatType = attrs[0]
+			structField.exampleValue = defineTypeOfExample(structField.schemaType, attrs[1])
+		case 3:
+			structField.formatType = attrs[0]
+			structField.schemaType = TransToValidSchemeType(attrs[2])
+			structField.exampleValue = defineTypeOfExample(structField.schemaType, attrs[1])
 		}
 	}
 	return structField
