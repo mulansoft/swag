@@ -448,6 +448,22 @@ type structField struct {
 	exampleValue interface{}
 }
 
+func (parser *Parser) getTypeSepc(pkgName, typeName string) (*ast.TypeSpec, string) {
+	if ts, ok := parser.TypeDefinitions[pkgName][typeName]; ok {
+		return ts, pkgName
+	}
+
+	// ignore pkgName
+	for name, item := range parser.TypeDefinitions {
+		if ts, ok := item[typeName]; ok {
+			return ts, name
+			break
+		}
+	}
+
+	return nil, ""
+}
+
 func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties map[string]spec.Schema) {
 	properties = map[string]spec.Schema{}
 	// name, schemaType, arrayType, formatType, exampleValue :=
@@ -461,22 +477,22 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 	}
 
 	// TODO: find package of schemaType and/or arrayType
-	if _, ok := parser.TypeDefinitions[pkgName][structField.schemaType]; ok { // user type field
+	if ts, newPkgName := parser.getTypeSepc(pkgName, structField.schemaType); ts != nil { // user type field
 		// write definition if not yet present
-		parser.ParseDefinition(pkgName, parser.TypeDefinitions[pkgName][structField.schemaType], structField.schemaType)
+		parser.ParseDefinition(newPkgName, ts, structField.schemaType)
 		properties[structField.name] = spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type:        []string{"object"}, // to avoid swagger validation error
 				Description: desc,
 				Ref: spec.Ref{
-					Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + structField.schemaType),
+					Ref: jsonreference.MustCreateRef("#/definitions/" + newPkgName + "." + structField.schemaType),
 				},
 			},
 		}
 	} else if structField.schemaType == "array" { // array field type
 		// if defined -- ref it
-		if _, ok := parser.TypeDefinitions[pkgName][structField.arrayType]; ok { // user type in array
-			parser.ParseDefinition(pkgName, parser.TypeDefinitions[pkgName][structField.arrayType], structField.arrayType)
+		if ts, newPkgName := parser.getTypeSepc(pkgName, structField.arrayType); ts != nil { // user type in array
+			parser.ParseDefinition(newPkgName, ts, structField.arrayType)
 			properties[structField.name] = spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Type:        []string{structField.schemaType},
@@ -485,7 +501,7 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 						Schema: &spec.Schema{
 							SchemaProps: spec.SchemaProps{
 								Ref: spec.Ref{
-									Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + structField.arrayType),
+									Ref: jsonreference.MustCreateRef("#/definitions/" + newPkgName + "." + structField.arrayType),
 								},
 							},
 						},
@@ -574,8 +590,9 @@ func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field, prop
 			findBaseTypeName = ss[1]
 		}
 
-		baseTypeSpec := parser.TypeDefinitions[findPgkName][findBaseTypeName]
-		parser.parseTypeSpec(findPgkName, baseTypeSpec, properties)
+		if ts, newfindPgkName := parser.getTypeSepc(findPgkName, findBaseTypeName); ts != nil {
+			parser.parseTypeSpec(newfindPgkName, ts, properties)
+		}
 	}
 }
 
