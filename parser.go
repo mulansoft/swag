@@ -640,25 +640,6 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 	} else if jsonTag != "" {
 		structField.name = jsonTag
 	}
-
-	bindingTag := reflect.StructTag(structTag).Get("binding")
-	if bindingTag != "" {
-		for _, val := range strings.Split(bindingTag, ",") {
-			if val == "required" {
-				structField.isRequired = true
-				break
-			}
-		}
-	}
-	validateTag := reflect.StructTag(structTag).Get("validate")
-	if validateTag != "" {
-		for _, val := range strings.Split(validateTag, ",") {
-			if val == "required" {
-				structField.isRequired = true
-				break
-			}
-		}
-	}
 	// doc:"description, default value, type alias"
 	docTag := reflect.StructTag(structTag).Get("doc")
 	if docTag != "" {
@@ -675,7 +656,75 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 			structField.exampleValue = defineTypeOfExample(structField.schemaType, attrs[1])
 		}
 	}
+	bindingTag := reflect.StructTag(structTag).Get("binding")
+	if bindingTag != "" {
+		attrs := strings.Split(bindingTag, ",")
+		structField.parseValidateTag(attrs)
+	}
+	validateTag := reflect.StructTag(structTag).Get("validate")
+	if validateTag != "" {
+		attrs := strings.Split(validateTag, ",")
+		structField.parseValidateTag(attrs)
+	}
 	return structField
+}
+
+func (sf *structField) parseValidateTag(attrs []string) {
+	validateStr := ""
+	for _, val := range attrs {
+		if val == "required" {
+			sf.isRequired = true
+		} else if strings.Contains(val, "len") {
+			data := strings.Split(val, "=")
+			if len(data) == 2 {
+				validateStr += "，长度" + data[1]
+			}
+		} else if strings.Contains(val, "max") {
+			data := strings.Split(val, "=")
+			if len(data) == 2 {
+				validateStr += "，最大值" + data[1]
+			}
+		} else if strings.Contains(val, "min") {
+			data := strings.Split(val, "=")
+			if len(data) == 2 {
+				validateStr += "，最小值" + data[1]
+			}
+		} else if strings.Contains(val, "eq") {
+			data := strings.Split(val, "=")
+			if len(data) == 2 {
+				validateStr += "，等于" + data[1]
+			}
+		} else if strings.Contains(val, "ne") {
+			data := strings.Split(val, "=")
+			if len(data) == 2 {
+				validateStr += "，不等于" + data[1]
+			}
+		} else if strings.Contains(val, "gt") {
+			data := strings.Split(val, "=")
+			if len(data) == 2 {
+				validateStr += "，大于" + data[1]
+			}
+		} else if strings.Contains(val, "gte") {
+			data := strings.Split(val, "=")
+			if len(data) == 2 {
+				validateStr += "，大于等于" + data[1]
+			}
+		} else if strings.Contains(val, "lt") {
+			data := strings.Split(val, "=")
+			if len(data) == 2 {
+				validateStr += "，小于" + data[1]
+			}
+		} else if strings.Contains(val, "lte") {
+			data := strings.Split(val, "=")
+			if len(data) == 2 {
+				validateStr += "，小于等于" + data[1]
+			}
+		}
+	}
+	if validateStr != "" {
+		validateStr = " 规则：" + strings.Trim(validateStr, "，")
+		sf.formatType += validateStr
+	}
 }
 
 func toSnakeCase(in string) string {
