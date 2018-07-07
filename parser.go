@@ -699,25 +699,25 @@ func (sf *structField) parseValidateTag(attrs []string) {
 			if len(data) == 2 {
 				validateStr += "，不等于" + data[1]
 			}
-		} else if strings.Contains(val, "gt") {
-			data := strings.Split(val, "=")
-			if len(data) == 2 {
-				validateStr += "，大于" + data[1]
-			}
 		} else if strings.Contains(val, "gte") {
 			data := strings.Split(val, "=")
 			if len(data) == 2 {
 				validateStr += "，大于等于" + data[1]
 			}
-		} else if strings.Contains(val, "lt") {
+		} else if strings.Contains(val, "gt") {
 			data := strings.Split(val, "=")
 			if len(data) == 2 {
-				validateStr += "，小于" + data[1]
+				validateStr += "，大于" + data[1]
 			}
 		} else if strings.Contains(val, "lte") {
 			data := strings.Split(val, "=")
 			if len(data) == 2 {
 				validateStr += "，小于等于" + data[1]
+			}
+		} else if strings.Contains(val, "lt") {
+			data := strings.Split(val, "=")
+			if len(data) == 2 {
+				validateStr += "，小于" + data[1]
 			}
 		}
 	}
