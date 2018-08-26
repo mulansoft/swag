@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
-	"github.com/zhongkeqin/swag"
+	"github.com/mulansoft/swag"
 )
 
 // Gen presents a generate tool for swag.

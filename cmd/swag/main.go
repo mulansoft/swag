@@ -6,8 +6,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
-	"github.com/zhongkeqin/swag"
-	"github.com/zhongkeqin/swag/gen"
+	"github.com/mulansoft/swag"
+	"github.com/mulansoft/swag/gen"
 )
 
 func main() {
