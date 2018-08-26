@@ -656,6 +656,10 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 			structField.exampleValue = defineTypeOfExample(structField.schemaType, attrs[1])
 		}
 	}
+	formatTag := reflect.StructTag(structTag).Get("format")
+	if formatTag != "" {
+		structField.formatType = formatTag
+	}
 	bindingTag := reflect.StructTag(structTag).Get("binding")
 	if bindingTag != "" {
 		attrs := strings.Split(bindingTag, ",")
