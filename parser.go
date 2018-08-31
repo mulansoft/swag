@@ -652,8 +652,12 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 			structField.exampleValue = defineTypeOfExample(structField.schemaType, attrs[1])
 		case 3:
 			structField.formatType = attrs[0]
-			structField.schemaType = TransToValidSchemeType(attrs[2])
-			structField.exampleValue = defineTypeOfExample(structField.schemaType, attrs[1])
+			if structField.schemaType == "array" {
+				structField.arrayType = TransToValidSchemeType(attrs[2])
+			} else {
+				structField.schemaType = TransToValidSchemeType(attrs[2])
+				structField.exampleValue = defineTypeOfExample(structField.schemaType, attrs[1])
+			}
 		}
 	}
 	formatTag := reflect.StructTag(structTag).Get("format")
