@@ -606,7 +606,7 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 	structField := &structField{
 		name:       field.Names[0].Name,
 		schemaType: prop.SchemaType,
-		arrayType:  prop.ArrayType,
+		arrayType: TransToValidSchemeType(prop.ArrayType),
 	}
 
 	switch parser.PropNamingStrategy {
