@@ -125,7 +125,7 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 				return fmt.Errorf("can not find ref type:\"%s\"", schemaType)
 			}
 			param.Schema.Ref = spec.Ref{
-				Ref: jsonreference.MustCreateRef("#/definitions/" + schemaType),
+				Ref: jsonreference.MustCreateRef("#/definitions/" + typeName),
 			}
 		}
 	case "formData":
@@ -422,11 +422,12 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 	schemaType := strings.Trim(matches[2], "{}")
 	refType := matches[3]
 
+	typeName := refType
 	if operation.parser != nil { // checking refType has existing in 'TypeDefinitions'
 		refSplit := strings.Split(refType, ".")
 		if len(refSplit) == 2 {
 			pkgName := refSplit[0]
-			typeName := refSplit[1]
+			typeName = refSplit[1]
 			if typeSpec, ok := operation.parser.TypeDefinitions[pkgName][typeName]; ok {
 				operation.parser.registerTypes[refType] = typeSpec
 			} else {
@@ -442,7 +443,7 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 
 	if schemaType == "object" {
 		response.Schema.Ref = spec.Ref{
-			Ref: jsonreference.MustCreateRef("#/definitions/" + refType),
+			Ref: jsonreference.MustCreateRef("#/definitions/" + typeName),
 		}
 	}
 
@@ -450,7 +451,7 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 		response.Schema.Items = &spec.SchemaOrArray{
 			Schema: &spec.Schema{
 				SchemaProps: spec.SchemaProps{
-					Ref: spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + refType)},
+					Ref: spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + typeName)},
 				},
 			},
 		}

@@ -367,25 +367,19 @@ func isNotRecurringNestStruct(refTypeName string, structStacks []string) bool {
 
 // ParseDefinition TODO: NEEDS COMMENT INFO
 func (parser *Parser) ParseDefinition(pkgName string, typeSpec *ast.TypeSpec, typeName string) {
-	var refTypeName string
-	if len(pkgName) > 0 {
-		refTypeName = pkgName + "." + typeName
-	} else {
-		refTypeName = typeName
-	}
-	if _, already := parser.swagger.Definitions[refTypeName]; already {
-		log.Println("Skipping '" + refTypeName + "', already present.")
+	if _, already := parser.swagger.Definitions[typeName]; already {
+		log.Println("Skipping '" + typeName + "', already present.")
 		return
 	}
 	properties := make(map[string]spec.Schema)
 	// stop repetitive structural parsing
-	if isNotRecurringNestStruct(refTypeName, structStacks) {
-		structStacks = append(structStacks, refTypeName)
+	if isNotRecurringNestStruct(typeName, structStacks) {
+		structStacks = append(structStacks, typeName)
 		parser.parseTypeSpec(pkgName, typeSpec, properties)
 	}
 	structStacks = []string{}
 	if len(properties) == 0 {
-		log.Println("Skipping '" + refTypeName + "', empty properties.")
+		log.Println("Skipping '" + typeName + "', empty properties.")
 		return
 	}
 
@@ -403,8 +397,8 @@ func (parser *Parser) ParseDefinition(pkgName string, typeSpec *ast.TypeSpec, ty
 		}
 		properties[k] = prop
 	}
-	log.Println("Generating " + refTypeName)
-	parser.swagger.Definitions[refTypeName] = spec.Schema{
+	log.Println("Generating " + typeName)
+	parser.swagger.Definitions[typeName] = spec.Schema{
 		SchemaProps: spec.SchemaProps{
 			Type:       []string{"object"},
 			Properties: properties,
@@ -485,7 +479,7 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 				Type:        []string{"object"}, // to avoid swagger validation error
 				Description: desc,
 				Ref: spec.Ref{
-					Ref: jsonreference.MustCreateRef("#/definitions/" + newPkgName + "." + structField.schemaType),
+					Ref: jsonreference.MustCreateRef("#/definitions/" + structField.schemaType),
 				},
 			},
 		}
@@ -501,7 +495,7 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 						Schema: &spec.Schema{
 							SchemaProps: spec.SchemaProps{
 								Ref: spec.Ref{
-									Ref: jsonreference.MustCreateRef("#/definitions/" + newPkgName + "." + structField.arrayType),
+									Ref: jsonreference.MustCreateRef("#/definitions/" + structField.arrayType),
 								},
 							},
 						},
@@ -606,7 +600,7 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 	structField := &structField{
 		name:       field.Names[0].Name,
 		schemaType: prop.SchemaType,
-		arrayType: TransToValidSchemeType(prop.ArrayType),
+		arrayType:  TransToValidSchemeType(prop.ArrayType),
 	}
 
 	switch parser.PropNamingStrategy {
